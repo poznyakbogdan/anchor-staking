@@ -8,9 +8,33 @@ describe("wmp-staking", () => {
 
   const program = anchor.workspace.WmpStaking as Program<WmpStaking>;
 
-  it("Is initialized!", async () => {
-    // Add your test here.
+  it("initialize works", async () => {
     const tx = await program.methods.initialize().rpc();
+    console.log("Your transaction signature", tx);
+  });
+
+  it("create_stake_pool works", async () => {
+    const tx = await program.methods.createStakePool().rpc();
+    console.log("Your transaction signature", tx);
+  });
+
+  it("create_stake_entry works", async () => {
+    const tx = await program.methods.createStakeEntry().rpc();
+    console.log("Your transaction signature", tx);
+  });
+
+  it("stake works", async () => {
+    const tx = await program.methods.stake().rpc();
+    console.log("Your transaction signature", tx);
+  });
+
+  it("unstake works", async () => {
+    const tx = await program.methods.unstake().rpc();
+    console.log("Your transaction signature", tx);
+  });
+
+  it("claim_rewards works", async () => {
+    const tx = await program.methods.claimRewards().rpc();
     console.log("Your transaction signature", tx);
   });
 });
