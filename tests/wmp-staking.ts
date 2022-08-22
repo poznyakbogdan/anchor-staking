@@ -2,7 +2,8 @@ import * as anchor from "@project-serum/anchor";
 import { Program, web3 } from "@project-serum/anchor";
 import { createMint } from "@solana/spl-token";
 import { assert } from "chai";
-import { getCreateStakePoolAccounts, getInitializeAccounts } from "../app/program/accounts";
+import { getCreateStakeEntryAccounts, getCreateStakePoolAccounts, getInitializeAccounts } from "../app/program/accounts";
+import { createStakePool } from "../app/program/instructions";
 import { getNextId } from "../app/program/state";
 import { WmpStaking } from "../target/types/wmp_staking";
 import { createAndFundAccounts } from "./accounts-pool";
@@ -69,7 +70,16 @@ describe("wmp-staking", () => {
   });
 
   it("create_stake_entry works", async () => {
-    const tx = await program.methods.createStakeEntry().rpc();
+    let stakePool = await createStakePool(adminKeyPair, mintWMP, mintXWMP);
+    let user = aliceKeyPair;
+
+    let accounts = await getCreateStakeEntryAccounts(user.publicKey, stakePool);
+    const tx = await program.methods
+      .createStakeEntry()
+      .accounts(accounts)
+      .signers([user])
+      .rpc();
+
     console.log("Your transaction signature", tx);
   });
 

@@ -17,3 +17,15 @@ export async function calculateStakePoolPda(id: number, programId: web3.PublicKe
     ];
     return await web3.PublicKey.findProgramAddress(seeds, programId);
 }
+
+export async function calculateStakeEntryPda(user: web3.PublicKey, stakePool:web3.PublicKey, programId: web3.PublicKey = WMP_STAKING_PROGRAM_ID) {
+    const prefix = "stake-entry";
+    let seeds = [
+        Buffer.from(prefix, "utf-8"),
+        stakePool.toBytes(),
+        user.toBytes(),
+    ];
+    return await web3.PublicKey.findProgramAddress(seeds, programId);
+}
+
+calculateStakeEntryPda

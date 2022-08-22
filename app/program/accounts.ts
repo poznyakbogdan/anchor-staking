@@ -1,7 +1,7 @@
 import { web3 } from "@project-serum/anchor";
 import { associatedAddress, TOKEN_PROGRAM_ID } from "@project-serum/anchor/dist/cjs/utils/token";
 import { ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { calculateGlobalDataPda, calculateStakePoolPda } from "./pda";
+import { calculateGlobalDataPda, calculateStakeEntryPda, calculateStakePoolPda } from "./pda";
 
 export async function getInitializeAccounts(admin: web3.PublicKey) {
     let globalDataPda = await calculateGlobalDataPda();
@@ -34,5 +34,20 @@ export async function getCreateStakePoolAccounts(
         tokenProgram: TOKEN_PROGRAM_ID,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
         rent: web3.SYSVAR_RENT_PUBKEY
+    }
+}
+
+export async function getCreateStakeEntryAccounts(
+    user: web3.PublicKey,
+    stakePool: web3.PublicKey) {
+    let globalDataPda = await calculateGlobalDataPda();
+    let stakeEntryPda = await calculateStakeEntryPda(user, stakePool);
+
+    return {
+        user: user,
+        globalData: globalDataPda[0],
+        stakePool: stakePool,
+        stakeEntry: stakeEntryPda[0],
+        systemProgram: web3.SystemProgram.programId
     }
 }
