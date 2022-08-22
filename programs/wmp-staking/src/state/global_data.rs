@@ -7,5 +7,7 @@ pub const GLOBAL_DATA_PREFIX: &str = "global-data";
 #[account]
 pub struct GlobalData {
     pub bump: u8,
-    pub id: i64
+
+    // TODO rename to count or next_id 
+    pub id: u16
 }
