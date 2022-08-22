@@ -10,7 +10,8 @@ function createKeypairs(count: number): web3.Keypair[] {
 }
 
 async function airdropSol(connection: web3.Connection, recepient: web3.PublicKey, solAmount: number) {
-    await connection.requestAirdrop(recepient, solAmount * 1e9);
+    let signature = await connection.requestAirdrop(recepient, solAmount * 1e9, );
+    await connection.confirmTransaction(signature);
 }
 
 export async function createAndFundAccounts(connection: web3.Connection, count: number, solAmount: number): Promise<web3.Keypair[]> {
