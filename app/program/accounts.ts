@@ -1,5 +1,7 @@
 import { web3 } from "@project-serum/anchor";
-import { calculateGlobalDataPda } from "./pda";
+import { associatedAddress, TOKEN_PROGRAM_ID } from "@project-serum/anchor/dist/cjs/utils/token";
+import { ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { calculateGlobalDataPda, calculateStakePoolPda } from "./pda";
 
 export async function getInitializeAccounts(admin: web3.PublicKey) {
     let globalDataPda = await calculateGlobalDataPda();
@@ -7,5 +9,30 @@ export async function getInitializeAccounts(admin: web3.PublicKey) {
         admin,
         globalData: globalDataPda[0],
         systemProgram: web3.SystemProgram.programId
+    }
+}
+
+export async function getCreateStakePoolAccounts(
+    creator: web3.PublicKey,
+    mintA: web3.PublicKey,
+    mintB: web3.PublicKey,
+    id: number) {
+    let globalDataPda = await calculateGlobalDataPda();
+    let stakePoolPda = await calculateStakePoolPda(id);
+    let escrowA = await associatedAddress({mint: mintA, owner: stakePoolPda[0]});
+    let escrowB = await associatedAddress({mint: mintB, owner: stakePoolPda[0]});
+
+    return {
+        creator: creator,
+        mintA: mintA,
+        mintB: mintB,
+        globalData: globalDataPda[0],
+        escrowA: escrowA,
+        escrowB: escrowB,
+        stakePool: stakePoolPda[0],
+        systemProgram: web3.SystemProgram.programId,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        rent: web3.SYSVAR_RENT_PUBKEY
     }
 }
