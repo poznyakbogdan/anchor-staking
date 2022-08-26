@@ -51,3 +51,21 @@ export async function getCreateStakeEntryAccounts(
         systemProgram: web3.SystemProgram.programId
     }
 }
+
+export async function getStakeAccounts(
+    user: web3.PublicKey,
+    stakePool: web3.PublicKey,
+    mintA: web3.PublicKey) {
+    let stakeEntryPda = await calculateStakeEntryPda(user, stakePool);
+    let escrowA = await associatedAddress({ mint: mintA, owner: stakePool});
+    let stakerTokenA = await associatedAddress({mint: mintA, owner: user});
+    return {
+        staker: user,
+        stakePool: stakePool,
+        stakeEntry: stakeEntryPda[0],
+        stakerTokenA: stakerTokenA,
+        escrowA: escrowA,
+        mintA: mintA,
+        tokenProgram: TOKEN_PROGRAM_ID
+    }
+}

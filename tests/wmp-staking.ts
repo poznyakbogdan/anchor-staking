@@ -1,12 +1,15 @@
 import * as anchor from "@project-serum/anchor";
 import { Program, web3 } from "@project-serum/anchor";
 import { createMint } from "@solana/spl-token";
+import { BN } from "bn.js";
 import { assert } from "chai";
-import { getCreateStakeEntryAccounts, getCreateStakePoolAccounts, getInitializeAccounts } from "../app/program/accounts";
-import { createStakePool } from "../app/program/instructions";
+import { getCreateStakeEntryAccounts, getCreateStakePoolAccounts, getInitializeAccounts, getStakeAccounts } from "../app/program/accounts";
+import { createStakeEntry, createStakePool } from "../app/program/instructions";
+import { calculateGlobalDataPda } from "../app/program/pda";
 import { getNextId } from "../app/program/state";
+import { tokenAmount } from "../app/program/utils";
 import { WmpStaking } from "../target/types/wmp_staking";
-import { createAndFundAccounts } from "./accounts-pool";
+import { createAndFundAccounts, fundAccountsWithWmp } from "./accounts-pool";
 
 describe("wmp-staking", () => {
   anchor.setProvider(anchor.AnchorProvider.env());
@@ -33,6 +36,14 @@ describe("wmp-staking", () => {
 
     mintWMP = await createMint(connection, adminKeyPair, adminKeyPair.publicKey, adminKeyPair.publicKey, 9);
     mintXWMP = await createMint(connection, adminKeyPair, adminKeyPair.publicKey, adminKeyPair.publicKey, 9);
+  
+    await fundAccountsWithWmp(
+      connection, 
+      [aliceKeyPair.publicKey, bobKeyPair.publicKey],
+      mintWMP,
+      adminKeyPair,
+      tokenAmount(100).toNumber()
+    );
   });
 
   it("initialize works", async () => {
@@ -84,7 +95,25 @@ describe("wmp-staking", () => {
   });
 
   it("stake works", async () => {
-    const tx = await program.methods.stake().rpc();
+    let staker = aliceKeyPair;
+    let stakeAmount = tokenAmount(100);
+    let stakePool = await createStakePool(adminKeyPair, mintWMP, mintXWMP);
+    let stakeEntry = await createStakeEntry(staker, stakePool);
+    let accounts = await getStakeAccounts(staker.publicKey, stakePool, mintWMP);
+    const tx = await program.methods
+      .stake(stakeAmount)
+      .accounts(accounts)
+      .signers([staker])
+      .rpc();
+
+    await program.provider.connection.confirmTransaction(tx);
+
+    let stakePoolData = await program.account.stakePool.fetchNullable(stakePool);
+    let stakeEntryData = await program.account.stakeEntry.fetchNullable(stakeEntry);
+
+    assert(stakePoolData.balance.eq(stakeAmount));
+    assert(stakeEntryData.balance.eq(stakeAmount));
+
     console.log("Your transaction signature", tx);
   });
 

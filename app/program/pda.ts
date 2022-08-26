@@ -27,5 +27,3 @@ export async function calculateStakeEntryPda(user: web3.PublicKey, stakePool:web
     ];
     return await web3.PublicKey.findProgramAddress(seeds, programId);
 }
-
-calculateStakeEntryPda
