@@ -3,8 +3,8 @@ import { Program, web3 } from "@project-serum/anchor";
 import { createMint } from "@solana/spl-token";
 import { BN } from "bn.js";
 import { assert } from "chai";
-import { getCreateStakeEntryAccounts, getCreateStakePoolAccounts, getInitializeAccounts, getStakeAccounts } from "../app/program/accounts";
-import { createStakeEntry, createStakePool } from "../app/program/instructions";
+import { getCreateStakeEntryAccounts, getCreateStakePoolAccounts, getInitializeAccounts, getStakeAccounts, getUnstakeAccounts } from "../app/program/accounts";
+import { createStakeEntry, createStakePool, stake } from "../app/program/instructions";
 import { calculateGlobalDataPda } from "../app/program/pda";
 import { getNextId } from "../app/program/state";
 import { tokenAmount } from "../app/program/utils";
@@ -118,7 +118,25 @@ describe("wmp-staking", () => {
   });
 
   it("unstake works", async () => {
-    const tx = await program.methods.unstake().rpc();
+    let stakePool = await createStakePool(adminKeyPair, mintWMP, mintXWMP);
+    let wmpAmount = tokenAmount(100);
+    let stakeEntry = await stake(bobKeyPair, mintWMP, wmpAmount, stakePool);
+
+    let accounts = await getUnstakeAccounts(bobKeyPair.publicKey, stakePool, mintWMP);
+    const tx = await program.methods
+      .unstake(wmpAmount)
+      .accounts(accounts)
+      .signers([bobKeyPair])
+      .rpc();
+
+    program.provider.connection.confirmTransaction(tx);
+
+    let stakePoolData = await program.account.stakePool.fetchNullable(stakePool);
+    let stakeEntryData = await program.account.stakeEntry.fetchNullable(stakeEntry);
+
+    assert(stakePoolData.balance.eq(new BN(0)));
+    assert(stakeEntryData.balance.eq(new BN(0)));
+    
     console.log("Your transaction signature", tx);
   });
 
