@@ -28,8 +28,8 @@ pub mod wmp_staking {
         instructions::stake::handler(ctx, amount)
     }
 
-    pub fn unstake(ctx: Context<Unstake>) -> ProgramResult {
-        instructions::unstake::handler(ctx)
+    pub fn unstake(ctx: Context<Unstake>, amount: u64) -> ProgramResult {
+        instructions::unstake::handler(ctx, amount)
     }
 
     pub fn claim_rewards(ctx: Context<ClaimRewards>) -> ProgramResult {
