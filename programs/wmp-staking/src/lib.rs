@@ -1,5 +1,6 @@
 pub mod instructions;
 pub mod state;
+pub mod error;
 
 use anchor_lang::prelude::*;
 use instructions::*;
@@ -23,8 +24,8 @@ pub mod wmp_staking {
         instructions::create_stake_entry::handler(ctx)
     }
 
-    pub fn stake(ctx: Context<Stake>) -> ProgramResult {
-        instructions::stake::handler(ctx)
+    pub fn stake(ctx: Context<Stake>, amount: u64) -> ProgramResult {
+        instructions::stake::handler(ctx, amount)
     }
 
     pub fn unstake(ctx: Context<Unstake>) -> ProgramResult {
