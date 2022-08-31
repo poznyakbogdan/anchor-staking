@@ -4,12 +4,16 @@ import { createMint } from "@solana/spl-token";
 import { BN } from "bn.js";
 import { assert } from "chai";
 import { getCreateStakeEntryAccounts, getCreateStakePoolAccounts, getInitializeAccounts, getSetStakePoolRewardsAccounts, getStakeAccounts, getUnstakeAccounts } from "../app/program/accounts";
-import { createStakeEntry, createStakePool, stake } from "../app/program/instructions";
+import { createStakeEntry, createStakePool, createStakePoolWithRewards, stake } from "../app/program/instructions";
 import { calculateGlobalDataPda } from "../app/program/pda";
 import { getNextId } from "../app/program/state";
-import { tokenAmount } from "../app/program/utils";
+import { fromTokenAmount, tokenAmount } from "../app/program/utils";
 import { WmpStaking } from "../target/types/wmp_staking";
 import { createAndFundAccounts, fundAccountsWithWmp } from "./accounts-pool";
+
+function wait(milliseconds) {
+  return new Promise(resolve => setTimeout(resolve, milliseconds));
+}
 
 describe("wmp-staking", () => {
   anchor.setProvider(anchor.AnchorProvider.env());
@@ -42,7 +46,7 @@ describe("wmp-staking", () => {
       [aliceKeyPair.publicKey, bobKeyPair.publicKey],
       mintWMP,
       adminKeyPair,
-      tokenAmount(100).toNumber()
+      tokenAmount(1000).toNumber()
     );
   });
 
@@ -174,6 +178,32 @@ describe("wmp-staking", () => {
     assert(stakeEntryData.balance.eq(new BN(0)));
     
     console.log("Your transaction signature", tx);
+  });
+
+  it("rewards updates correctly", async () => {
+    let creator = adminKeyPair;
+    let rewardsPerSecond = tokenAmount(1);
+    let stakePool = await createStakePoolWithRewards(creator, mintWMP, mintXWMP, rewardsPerSecond);
+
+    let staker = bobKeyPair;
+    let stakeAmount = tokenAmount(100);
+    let stakeEntry = await createStakeEntry(staker, stakePool);
+
+    await stake(bobKeyPair, mintWMP, stakeAmount, stakePool, stakeEntry);
+
+    let timeA = (await program.account.stakePool.fetchNullable(stakePool)).lastUpdateTimestamp.toNumber();
+
+    await wait(10000);
+
+    await stake(bobKeyPair, mintWMP, stakeAmount, stakePool, stakeEntry);
+
+    let timeB = (await program.account.stakePool.fetchNullable(stakePool)).lastUpdateTimestamp.toNumber();
+
+    let expectedResult = (timeB - timeA);
+
+    let stakeEntryData = await program.account.stakeEntry.fetchNullable(stakeEntry);
+
+    assert.equal(fromTokenAmount(stakeEntryData.rewards), expectedResult);
   });
 
   it("claim_rewards works", async () => {

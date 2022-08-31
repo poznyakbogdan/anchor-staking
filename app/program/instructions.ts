@@ -1,7 +1,7 @@
 import { Program, web3 } from "@project-serum/anchor";
 import * as anchor from "@project-serum/anchor";
 import { WmpStaking } from "../../target/types/wmp_staking";
-import { getCreateStakeEntryAccounts, getCreateStakePoolAccounts, getStakeAccounts } from "./accounts";
+import { getCreateStakeEntryAccounts, getCreateStakePoolAccounts, getSetStakePoolRewardsAccounts, getStakeAccounts } from "./accounts";
 import { getNextId } from "./state";
 
 const program = anchor.workspace.WmpStaking as Program<WmpStaking>;
@@ -17,6 +17,23 @@ export async function createStakePool(creator: web3.Signer, mintA: web3.PublicKe
 
     await program.provider.connection.confirmTransaction(tx);
     return accounts.stakePool;
+}
+
+export async function setStakePoolRewards(stakePool: web3.PublicKey, admin: web3.Signer, rewardsPerSecond: anchor.BN) {
+  let accounts = await getSetStakePoolRewardsAccounts(admin.publicKey, stakePool);
+  const tx = await program.methods
+    .setStakePoolRewards(rewardsPerSecond)
+    .accounts(accounts)
+    .signers([admin])
+    .rpc();
+
+  await program.provider.connection.confirmTransaction(tx);
+  return stakePool;
+}
+
+export async function createStakePoolWithRewards(creator: web3.Signer, mintA: web3.PublicKey, mintB: web3.PublicKey, rewardsPerSecond: anchor.BN) {
+  let stakePool = await createStakePool(creator, mintA, mintB);
+  return await setStakePoolRewards(stakePool, creator, rewardsPerSecond);
 }
 
 export async function createStakeEntry(staker: web3.Signer, stakePool: web3.PublicKey) {
