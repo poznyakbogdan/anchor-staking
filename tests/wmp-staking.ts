@@ -3,7 +3,7 @@ import { Program, web3 } from "@project-serum/anchor";
 import { createMint } from "@solana/spl-token";
 import { BN } from "bn.js";
 import { assert } from "chai";
-import { getCreateStakeEntryAccounts, getCreateStakePoolAccounts, getInitializeAccounts, getStakeAccounts, getUnstakeAccounts } from "../app/program/accounts";
+import { getCreateStakeEntryAccounts, getCreateStakePoolAccounts, getInitializeAccounts, getSetStakePoolRewardsAccounts, getStakeAccounts, getUnstakeAccounts } from "../app/program/accounts";
 import { createStakeEntry, createStakePool, stake } from "../app/program/instructions";
 import { calculateGlobalDataPda } from "../app/program/pda";
 import { getNextId } from "../app/program/state";
@@ -79,6 +79,42 @@ describe("wmp-staking", () => {
     let globalData = await program.account.globalData.fetchNullable(accounts.globalData);
     assert.equal(globalData.id, ++id);
   });
+
+  it("set_rewards_per_second works", async () => {
+    let id = await getNextId();
+    let accounts = await getCreateStakePoolAccounts(bobKeyPair.publicKey, mintWMP, mintXWMP, id);
+    const createStakePoolIx = await program.methods
+      .createStakePool()
+      .accounts(accounts)
+      .signers([bobKeyPair])
+      .instruction();
+
+    let rewardsPerSecond = tokenAmount(1);
+    let setStakePoolRewardsAccounts = await getSetStakePoolRewardsAccounts(bobKeyPair.publicKey, accounts.stakePool);
+    const setRewardsIx = await program.methods
+      .setStakePoolRewards(rewardsPerSecond)
+      .accounts(setStakePoolRewardsAccounts)
+      .signers([bobKeyPair])
+      .instruction();
+
+    let tx = new web3.Transaction();
+    tx.add(createStakePoolIx);
+    tx.add(setRewardsIx);
+
+    let {blockhash} = await program.provider.connection.getRecentBlockhash();
+    tx.recentBlockhash = blockhash;
+    
+    let hash = await program.provider.connection.sendTransaction(tx, [bobKeyPair]);
+
+    await program.provider.connection.confirmTransaction(hash);
+
+    let stakePooldData = await program.account.stakePool.fetchNullable(accounts.stakePool);
+
+    assert(stakePooldData.rewardsPerSecond.eq(rewardsPerSecond));
+
+    console.log("Your transaction signature", hash);
+  });
+
 
   it("create_stake_entry works", async () => {
     let stakePool = await createStakePool(adminKeyPair, mintWMP, mintXWMP);

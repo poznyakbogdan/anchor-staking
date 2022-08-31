@@ -12,6 +12,13 @@ export async function getInitializeAccounts(admin: web3.PublicKey) {
     }
 }
 
+export async function getSetStakePoolRewardsAccounts(admin: web3.PublicKey, stakePool: web3.PublicKey) {
+    return {
+        admin,
+        stakePool
+    }
+}
+
 export async function getCreateStakePoolAccounts(
     creator: web3.PublicKey,
     mintA: web3.PublicKey,
