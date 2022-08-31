@@ -1141,6 +1141,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "solana-safe-math"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ccd6612e507fc0c6e17c51e3dfbed7b724f7c33cd4f5eb452d7dc4688ddaa888"
+dependencies = [
+ "solana-program",
+ "thiserror",
+]
+
+[[package]]
 name = "solana-sdk-macro"
 version = "1.9.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1370,6 +1380,7 @@ version = "0.1.0"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
+ "solana-safe-math",
 ]
 
 [[package]]
