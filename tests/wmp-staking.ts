@@ -1,15 +1,18 @@
 import * as anchor from "@project-serum/anchor";
 import { Program, web3 } from "@project-serum/anchor";
-import { createMint } from "@solana/spl-token";
+import { SplTokenStateCoder } from "@project-serum/anchor/dist/cjs/coder/spl-token/state";
+import { token } from "@project-serum/anchor/dist/cjs/utils";
+import { associatedAddress } from "@project-serum/anchor/dist/cjs/utils/token";
+import { createAssociatedTokenAccount, createMint, getAccount, TokenAccountNotFoundError } from "@solana/spl-token";
 import { BN } from "bn.js";
 import { assert } from "chai";
-import { getCreateStakeEntryAccounts, getCreateStakePoolAccounts, getInitializeAccounts, getSetStakePoolRewardsAccounts, getStakeAccounts, getUnstakeAccounts } from "../app/program/accounts";
+import { getClaimRewardsAccounts, getCreateStakeEntryAccounts, getCreateStakePoolAccounts, getInitializeAccounts, getSetStakePoolRewardsAccounts, getStakeAccounts, getUnstakeAccounts } from "../app/program/accounts";
 import { createStakeEntry, createStakePool, createStakePoolWithRewards, stake } from "../app/program/instructions";
 import { calculateGlobalDataPda } from "../app/program/pda";
 import { getNextId } from "../app/program/state";
-import { fromTokenAmount, tokenAmount } from "../app/program/utils";
+import { fromBigIntTokenAmount, fromTokenAmount, tokenAmount } from "../app/program/utils";
 import { WmpStaking } from "../target/types/wmp_staking";
-import { createAndFundAccounts, fundAccountsWithWmp } from "./accounts-pool";
+import { createAndFundAccounts, createAndFundAccountsWithTokens, createTokenAccounts, fundAccountsWithTokens } from "./accounts-pool";
 
 function wait(milliseconds) {
   return new Promise(resolve => setTimeout(resolve, milliseconds));
@@ -41,12 +44,19 @@ describe("wmp-staking", () => {
     mintWMP = await createMint(connection, adminKeyPair, adminKeyPair.publicKey, adminKeyPair.publicKey, 9);
     mintXWMP = await createMint(connection, adminKeyPair, adminKeyPair.publicKey, adminKeyPair.publicKey, 9);
   
-    await fundAccountsWithWmp(
+    await createAndFundAccountsWithTokens(
       connection, 
       [aliceKeyPair.publicKey, bobKeyPair.publicKey],
       mintWMP,
       adminKeyPair,
       tokenAmount(1000).toNumber()
+    );
+
+    await createTokenAccounts(
+      connection, 
+      [aliceKeyPair.publicKey, bobKeyPair.publicKey],
+      mintXWMP,
+      adminKeyPair
     );
   });
 
@@ -207,7 +217,39 @@ describe("wmp-staking", () => {
   });
 
   it("claim_rewards works", async () => {
-    const tx = await program.methods.claimRewards().rpc();
+    let creator = adminKeyPair;
+    let rewardsPerSecond = tokenAmount(1);
+    let stakePool = await createStakePoolWithRewards(creator, mintWMP, mintXWMP, rewardsPerSecond, adminKeyPair);
+
+    let staker = aliceKeyPair;
+    let stakeAmount = tokenAmount(100);
+    let stakerXWmpAddress = await associatedAddress({mint: mintXWMP, owner: staker.publicKey});
+
+    let stakeEntry = await stake(staker, mintWMP, stakeAmount, stakePool);
+    
+    let timeA = (await program.account.stakePool.fetchNullable(stakePool)).lastUpdateTimestamp.toNumber();
+
+    await wait(10_000);
+
+    let acccounts = await getClaimRewardsAccounts(staker.publicKey, stakePool, mintXWMP);
+    const tx = await program.methods
+      .claimRewards()
+      .accounts(acccounts)
+      .signers([staker])
+      .rpc({skipPreflight: true});
+    
+    await program.provider.connection.confirmTransaction(tx);
+
+    let timeB = (await program.account.stakePool.fetchNullable(stakePool)).lastUpdateTimestamp.toNumber();
+    let stakeEntryData = await program.account.stakeEntry.fetchNullable(stakeEntry);
+
     console.log("Your transaction signature", tx);
+
+    let stakerXWmpData = await getAccount(program.provider.connection, stakerXWmpAddress);
+    
+    let expectedResult = timeB - timeA;
+
+    assert.equal(fromBigIntTokenAmount(stakerXWmpData.amount), expectedResult);
+    assert.equal(fromTokenAmount(stakeEntryData.rewards), 0);
   });
 });

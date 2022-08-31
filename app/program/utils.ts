@@ -12,3 +12,9 @@ export function fromTokenAmount(amount: BN) {
 
     return amountNumber / (10 ** DECIMALS)
 }
+
+export function fromBigIntTokenAmount(amount: BigInt) {
+    let amountNumber = Number(amount);
+
+    return amountNumber / (10 ** DECIMALS)
+}

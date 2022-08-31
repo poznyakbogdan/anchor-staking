@@ -94,3 +94,21 @@ export async function getUnstakeAccounts(
         tokenProgram: TOKEN_PROGRAM_ID
     }
 }
+
+export async function getClaimRewardsAccounts(
+    user: web3.PublicKey,
+    stakePool: web3.PublicKey,
+    mintB: web3.PublicKey) {
+    let stakeEntryPda = await calculateStakeEntryPda(user, stakePool);
+    let escrowB = await associatedAddress({ mint: mintB, owner: stakePool});
+    let stakerB = await associatedAddress({mint: mintB, owner: user});
+    return {
+        staker: user,
+        stakePool: stakePool,
+        stakeEntry: stakeEntryPda[0],
+        stakerB: stakerB,
+        escrowB: escrowB,
+        mintB: mintB,
+        tokenProgram: TOKEN_PROGRAM_ID
+    }
+}

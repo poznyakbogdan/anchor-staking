@@ -3,6 +3,8 @@ import * as anchor from "@project-serum/anchor";
 import { WmpStaking } from "../../target/types/wmp_staking";
 import { getCreateStakeEntryAccounts, getCreateStakePoolAccounts, getSetStakePoolRewardsAccounts, getStakeAccounts } from "./accounts";
 import { getNextId } from "./state";
+import { fundAccountsWithTokens } from "../../tests/accounts-pool";
+import { tokenAmount } from "./utils";
 
 const program = anchor.workspace.WmpStaking as Program<WmpStaking>;
 
@@ -31,8 +33,17 @@ export async function setStakePoolRewards(stakePool: web3.PublicKey, admin: web3
   return stakePool;
 }
 
-export async function createStakePoolWithRewards(creator: web3.Signer, mintA: web3.PublicKey, mintB: web3.PublicKey, rewardsPerSecond: anchor.BN) {
+export async function createStakePoolWithRewards(creator: web3.Signer, mintA: web3.PublicKey, mintB: web3.PublicKey, rewardsPerSecond: anchor.BN, mintBAuthority: web3.Signer = null) {
   let stakePool = await createStakePool(creator, mintA, mintB);
+  if (mintBAuthority) {
+    await fundAccountsWithTokens(
+      program.provider.connection,
+      [stakePool],
+      mintB,
+      mintBAuthority,
+      tokenAmount(1000).toNumber()
+    );
+  }
   return await setStakePoolRewards(stakePool, creator, rewardsPerSecond);
 }
 

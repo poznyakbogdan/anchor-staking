@@ -1,4 +1,5 @@
 import { web3 } from "@project-serum/anchor";
+import { associatedAddress } from "@project-serum/anchor/dist/cjs/utils/token";
 import { createAssociatedTokenAccount, mintTo } from "@solana/spl-token";
 import { BN } from "bn.js";
 
@@ -25,17 +26,46 @@ export async function createAndFundAccounts(connection: web3.Connection, count: 
     return keypairs;
 }
 
-export async function fundAccountsWithWmp(
+export async function createAndFundAccountsWithTokens(
     connection: web3.Connection, 
     accounts: web3.PublicKey[], 
-    wmpMint: web3.PublicKey,
+    mint: web3.PublicKey,
     authority: web3.Signer,
     amount: number
     ): Promise<void> {
     let promises = accounts.map(async a => {
-        let associatedAddress = await createAssociatedTokenAccount(connection, authority, wmpMint, a);
-        let tx = await mintTo(connection, authority, wmpMint, associatedAddress, authority, amount);
+        let associatedAddress = await createAssociatedTokenAccount(connection, authority, mint, a);
+        let tx = await mintTo(connection, authority, mint, associatedAddress, authority, amount);
         await connection.confirmTransaction(tx);
+    });
+
+    await Promise.all(promises);
+}
+
+export async function fundAccountsWithTokens(
+    connection: web3.Connection, 
+    accounts: web3.PublicKey[], 
+    mint: web3.PublicKey,
+    authority: web3.Signer,
+    amount: number
+    ): Promise<void> {
+    let promises = accounts.map(async a => {
+        let associatedAddr = await associatedAddress({mint, owner: a});
+        let tx = await mintTo(connection, authority, mint, associatedAddr, authority, amount);
+        await connection.confirmTransaction(tx);
+    });
+
+    await Promise.all(promises);
+}
+
+export async function createTokenAccounts(
+    connection: web3.Connection, 
+    accounts: web3.PublicKey[], 
+    mint: web3.PublicKey,
+    authority: web3.Signer
+    ): Promise<void> {
+    let promises = accounts.map(async a => {
+        await await createAssociatedTokenAccount(connection, authority, mint, a);
     });
 
     await Promise.all(promises);
