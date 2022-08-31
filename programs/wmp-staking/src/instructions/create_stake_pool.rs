@@ -16,7 +16,10 @@ pub fn handler(ctx: Context<CreateStakePool>) -> ProgramResult {
     stake_pool.escrow_a = ctx.accounts.escrow_a.key();
     stake_pool.escrow_b = ctx.accounts.escrow_b.key();
     stake_pool.creator = ctx.accounts.creator.key();
-
+    stake_pool.balance = 0;
+    stake_pool.last_update_timestamp = Clock::get().unwrap().unix_timestamp;
+    stake_pool.rewards_per_token_stored = 0;
+    
     global_data.id += 1;
 
     Ok(())

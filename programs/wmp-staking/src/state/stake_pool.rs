@@ -14,5 +14,8 @@ pub struct StakePool {
     pub mint_b: Pubkey,
     pub escrow_a: Pubkey,
     pub escrow_b: Pubkey,
-    pub creator: Pubkey
+    pub creator: Pubkey,
+    pub rewards_per_second: u64,
+    pub rewards_per_token_stored: u64,
+    pub last_update_timestamp: i64
 }

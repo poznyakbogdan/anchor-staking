@@ -11,6 +11,8 @@ pub fn handler(ctx: Context<CreateStakeEntry>) -> ProgramResult {
     stake_entry.bump = *ctx.bumps.get("stake_entry").unwrap();
     stake_entry.pool = ctx.accounts.stake_pool.key();
     stake_entry.balance = 0;
+    stake_entry.rewards = 0;
+    stake_entry.rewards_per_token_paid = 0;
 
     Ok(())
 }
