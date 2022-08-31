@@ -17,6 +17,10 @@ pub mod wmp_staking {
         instructions::initialize::handler(ctx)
     }
 
+    pub fn set_stake_pool_rewards(ctx: Context<SetStakePoolRewards>, rewards_per_second: u64) -> ProgramResult {
+        instructions::set_stake_pool_rewards::handler(ctx, rewards_per_second)
+    }
+
     pub fn create_stake_pool(ctx: Context<CreateStakePool>) -> ProgramResult {
         instructions::create_stake_pool::handler(ctx)
     }
