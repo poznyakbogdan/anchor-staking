@@ -1,12 +1,27 @@
 import { Program, web3 } from "@project-serum/anchor";
 import * as anchor from "@project-serum/anchor";
 import { WmpStaking } from "../../target/types/wmp_staking";
-import { getCreateStakeEntryAccounts, getCreateStakePoolAccounts, getSetStakePoolRewardsAccounts, getStakeAccounts } from "./accounts";
+import { getCreateStakeEntryAccounts, getCreateStakePoolAccounts, getInitializeAccounts, getSetStakePoolRewardsAccounts, getStakeAccounts } from "./accounts";
 import { getNextId } from "./state";
 import { fundAccountsWithTokens } from "../../tests/accounts-pool";
 import { tokenAmount } from "./utils";
 
-const program = anchor.workspace.WmpStaking as Program<WmpStaking>;
+export let program: Program<WmpStaking>;
+
+export function setProgram(stakingProgram: Program<WmpStaking>) {
+  program = stakingProgram;
+}
+
+export async function initialize(admin: web3.Signer) {
+  let accounts = await getInitializeAccounts(admin.publicKey);
+  const tx = await program.methods
+    .initialize()
+    .accounts(accounts)
+    .signers([admin])
+    .rpc({skipPreflight: true});
+
+    await program.provider.connection.confirmTransaction(tx);
+}
 
 export async function createStakePool(creator: web3.Signer, mintA: web3.PublicKey, mintB: web3.PublicKey) {
     let id = await getNextId();
