@@ -7,7 +7,37 @@
         <title>WMP Staking</title>
     </head>
     <body>
-        
-        <script src="./app/src/index.ts"></script>
+        <div>
+            <div id="connect-wallet">
+                <button>Connect wallet</button>
+            </div>
+
+            <div id="wallet-connected">
+                <div id="staking-ui">
+                    <div id="stake">
+                        <input type="number" name="stake-amount" step="0.01" />
+                        <button>stake</button>
+                    </div>
+                    <div id="unstake">
+                        <input type="number" name="unstake-amount" step="0.01" />
+                        <button>unstake</button>
+                    </div>
+                </div>
+
+                <div id="stake-entry-data">
+                    <p>Stake amount <span id="stake-amount"></span></p>
+                    <p>Rewards amount <span id="rewards-amount"></span></p>
+                </div>
+
+                <div id="token-a-data">
+                    <p>A balance <span id="a-amount"></span></p>
+                </div>
+
+                <div id="token-b-data">
+                    <p>B balance <span id="b-amount"></span></p>
+                </div>
+            </div>
+        </div>
+        <script src="./app/src/index.ts" type="module"></script>
     </body>
 </html>
