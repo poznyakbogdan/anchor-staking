@@ -6,3 +6,5 @@ target
 node_modules
 test-ledger
 drafts
+dist
+.parcel-cache
