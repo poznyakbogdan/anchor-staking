@@ -7,7 +7,7 @@ import { createAssociatedTokenAccount, createMint, getAccount, TokenAccountNotFo
 import { BN } from "bn.js";
 import { assert } from "chai";
 import { getClaimRewardsAccounts, getCreateStakeEntryAccounts, getCreateStakePoolAccounts, getInitializeAccounts, getSetStakePoolRewardsAccounts, getStakeAccounts, getUnstakeAccounts } from "../app/program/accounts";
-import { createStakeEntry, createStakePool, createStakePoolWithRewards, stake } from "../app/program/instructions";
+import { createStakeEntry, createStakePool, createStakePoolWithRewards, setProgram, stake } from "../app/program/instructions";
 import { calculateGlobalDataPda } from "../app/program/pda";
 import { getNextId } from "../app/program/state";
 import { fromBigIntTokenAmount, fromTokenAmount, tokenAmount } from "../app/program/utils";
@@ -22,6 +22,7 @@ describe("wmp-staking", () => {
   anchor.setProvider(anchor.AnchorProvider.env());
 
   const program = anchor.workspace.WmpStaking as Program<WmpStaking>;
+  setProgram(program);
   let keypairs: web3.Keypair[] = [];
   let adminKeyPair: web3.Keypair;
   let aliceKeyPair: web3.Keypair;
