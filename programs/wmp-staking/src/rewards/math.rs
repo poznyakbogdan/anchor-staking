@@ -14,7 +14,7 @@ pub fn calculate_rewards(rewards: u128, stake_amount: u128, current_rewards_per_
 
 pub fn calculate_rewards_per_token(prev_rewards_per_token: u128, rewards_per_sec: u128, now_timestamp: u128, prev_timestamp: u128, total_staked: u128) -> Result<u128, ProgramError> {
     if total_staked == 0 {
-        return Ok(0);
+        return Ok(prev_rewards_per_token);
     }
 
     let interval = (now_timestamp).safe_sub(prev_timestamp)?;
